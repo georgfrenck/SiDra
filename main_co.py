@@ -1,10 +1,13 @@
+
 from tkinter import *
+import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg)
-import numpy as np
 import math
 import os
 
+import faulthandler
+faulthandler.enable()
 
 class Paint(object):
     points = []
@@ -36,11 +39,12 @@ class Paint(object):
         self.root = Tk()
 
         self.var_show_triangles = IntVar()
+        self.var_show_triangles.set(1)
 
         self.var_show_point_indizes = IntVar()
 
         self.left_panel1 = PanedWindow(self.root)
-        self.left_panel1.grid(row=1, column=0)
+        self.left_panel1.grid(row=1,column=0)
 
         self.left_panel2 = PanedWindow(self.root)
         self.left_panel2.grid(row=2, column=0)
@@ -70,19 +74,18 @@ class Paint(object):
         self.slider.grid(row=0, column=6)
 
         self.show_triangles = Checkbutton(self.root, text='Show Triangles', variable=self.var_show_triangles, onvalue=1,
-                                          offvalue=0, command=lambda: self.redraw(False))
+                                          offvalue=0, command= lambda: self.redraw(False),)
         self.show_triangles.grid(row=0, column=7)
 
-        self.show_point_indizes = Checkbutton(self.root, text='Point Numbers', variable=self.var_show_point_indizes,
-                                              onvalue=1,
-                                              offvalue=0, command=lambda: self.redraw(False))
+        self.show_point_indizes = Checkbutton(self.root, text='Point Numbers', variable=self.var_show_point_indizes, onvalue=1,
+                                          offvalue=0, command= lambda: self.redraw(False))
         self.show_point_indizes.grid(row=0, column=8)
 
         self.plabel = Label(self.left_panel1, text="Points")
         self.plabel.pack()
 
         self.scrollbar_points = Scrollbar(self.left_panel1)
-        self.scrollbar_points.pack(side=RIGHT, fill=BOTH)
+        self.scrollbar_points.pack(side=RIGHT,fill=BOTH)
 
         self.plist = Listbox(self.left_panel1, yscrollcommand=self.scrollbar_points.set)
         self.plist.bind('<<ListboxSelect>>', self.onselectp)
@@ -127,7 +130,7 @@ class Paint(object):
         self.delete_selection_button.grid(row=4, column=0)
 
         self.save_button = Button(self.root, text='SaveData', command=self.save_Data)
-        self.save_button.grid(row=3, column=7)
+        self.save_button.grid(row=0,column=9)
 
         self.c = Canvas(self.root, bg='white', width=700, height=700)
         self.c.grid(row=1, rowspan=7, column=1, columnspan=6)
@@ -225,9 +228,9 @@ class Paint(object):
         p2y = self.points[line2[0]][1]
         q2x = self.points[line2[1]][0]
         q2y = self.points[line2[1]][1]
-        if (q2x - p2x) == 0:  # second line is vertical
+        if (q2x-p2x) == 0:  # second line is vertical
             v = [q1x - p1x, q1y - p1y]
-            tau = (q2x - p1x) / v[0]
+            tau = (q2x - p1x)/v[0]
             ysp = p1y + v[1] * tau
             if p2y < ysp < q2y or q2y < ysp < p2y:
                 return [q2x, round(ysp)]
@@ -235,18 +238,17 @@ class Paint(object):
             return None
         elif q1x == p1x:  # first line is vertical
             v = [q2x - p2x, q2y - p2y]
-            tau = (q1x - p2x) / v[0]
+            tau = (q1x - p2x)/v[0]
             ysp = p2y + v[1] * tau
             if p1y < ysp < q1y or q1y < ysp < p1y:
                 return [q1x, round(ysp)]
             return None
         else:  # calculate intersection point and return it as integer after rounding
-            tau = ((p2y - p1y) - ((p2x - p1x) * (q1y - p1y) / (q1x - p1x))) / (
-                        ((q2x - p2x) * (q1y - p1y) / (q1x - p1x)) - (q2y - p2y))
+            tau = ((p2y-p1y)-((p2x-p1x)*(q1y-p1y)/(q1x-p1x)))/(((q2x-p2x)*(q1y-p1y)/(q1x-p1x))-(q2y-p2y))
             phi = ((p1y - p2y) - ((p1x - p2x) * (q2y - p2y) / (q2x - p2x))) / (
-                    ((q1x - p1x) * (q2y - p2y) / (q2x - p2x)) - (q1y - p1y))
+                        ((q1x - p1x) * (q2y - p2y) / (q2x - p2x)) - (q1y - p1y))
             if 0 < tau < 1 and 0 < phi < 1:
-                return [round(p2x + tau * (q2x - p2x)), round(p2y + tau * (q2y - p2y))]
+                return [round(p2x+tau*(q2x-p2x)), round(p2y+tau*(q2y-p2y))]
             else:
                 return None
 
@@ -258,7 +260,7 @@ class Paint(object):
                 self.demarkpoints()
             if self.find_point(clicked_point):
                 point1 = self.find_point(clicked_point)
-                self.markpoint(point1, 0)
+                self.markpoint(point1,0)
             else:
                 self.draw_point(clicked_point)
         elif self.active_button == self.line_button:  # draw a line from the marked point to the clicked point or mark the point
@@ -306,11 +308,12 @@ class Paint(object):
             self.points.append(point)
         self.redraw(True)
 
+
     # check if position is near a existing point
     def find_point(self, point):
         for i in range(-5, 5):
             for j in range(-5, 5):
-                searchobject = [point[0] + i, point[1] + j]
+                searchobject = [point[0]+i, point[1]+j]
                 if searchobject in self.points:
                     return searchobject
         return None
@@ -356,8 +359,7 @@ class Paint(object):
                 self.redraw(True)
             else:  # sort the intersecting lines for easier processing
                 for i in range(len(schnittpunktliste)):
-                    dist = ((point1[0] - schnittpunktliste[i][0]) ** 2 + (
-                                point1[1] - schnittpunktliste[i][1]) ** 2) ** 0.5
+                    dist = ((point1[0] - schnittpunktliste[i][0]) ** 2 + (point1[1] - schnittpunktliste[i][1]) ** 2) ** 0.5
                     dist_list.append([dist, i])
                 dist_list.sort()
                 for i in range(len(dist_list)):  # add intersection points
@@ -368,26 +370,61 @@ class Paint(object):
                         self.lines.append([index1, index3])
                     if i == len(dist_list) - 1:
                         index3 = self.points.index(schnittpunktliste[dist_list[i][1]])
-                        index4 = self.points.index(schnittpunktliste[dist_list[i - 1][1]])
+                        index4 = self.points.index(schnittpunktliste[dist_list[i-1][1]])
                         if len(dist_list) > 1:
                             self.lines.append([index4, index3])
                         self.lines.append([index3, index2])
                     elif i != 0:
-                        index3 = self.points.index(schnittpunktliste[dist_list[i - 1][1]])
+                        index3 = self.points.index(schnittpunktliste[dist_list[i-1][1]])
                         index4 = self.points.index(schnittpunktliste[dist_list[i][1]])
                         self.lines.append([index3, index4])
+                
                 for i in range(len(schnittlinienliste)):  # cut the intersected lines in half
                     index5 = schnittlinienliste[i][0]
                     index6 = self.points.index(schnittpunktliste[i])
                     index7 = schnittlinienliste[i][1]
-                    for j in range(len(self.triangles)):  # cut intersected triangles
-                        if index5 in self.triangles[j] and index7 in self.triangles[j]:
-                            t1 = [index6 if x == index7 else x for x in self.triangles[j]]
-                            t2 = [index6 if x == index5 else x for x in self.triangles[j]]
-                            self.deletetriangle(self.triangles[j], False)
+                    for j in self.triangles:  # cut intersected triangles
+                        if index5 in j and index7 in j:
+                            triangle_temp_1 = [j[0],j[1],j[2]]
+                            triangle_temp_1.remove(index5)
+                            triangle_temp_1.append(index6)
+                            triangle_temp_2 = [j[0],j[1],j[2]]
+                            triangle_temp_2.remove(index7)
+                            triangle_temp_2.append(index6)
+                            self.triangles.append(triangle_temp_1)
+                            self.triangles.append(triangle_temp_2)
+                            # t1 = [index6 if x == index7 else x for x in j]
+                            # t2 = [index6 if x == index5 else x for x in j]
+                            self.deletetriangle(j, False)
+                            index = len(self.triangles)
+                            self.tlist.insert(index, str(triangle_temp_1))
+                            self.tlist.insert(index+1, str(triangle_temp_2))
+                            for k in range(3):
+                                t1_temp=[triangle_temp_1[0],triangle_temp_1[1],triangle_temp_1[2]]
+                                t1_temp.pop(k)
+                                if (not t1_temp in self.lines) and (not [t1_temp[1],t1_temp[0]] in self.lines):
+                                    self.lines.append(t1_temp)
+                                    if self.schnittpunkt(t1_temp, [index1, index2]):
+                                        schnittlinienliste.append(t1_temp)
+                                        schnittpunktliste.append(self.schnittpunkt(t1_temp, [index1, index2]))
+                                t2_temp=[triangle_temp_2[0],triangle_temp_2[1],triangle_temp_2[2]]
+                                t2_temp.pop(k)
+                                if (not t2_temp in self.lines) and (not [t2_temp[1],t2_temp[0]] in self.lines):
+                                    self.lines.append(t2_temp)
+                                    if self.schnittpunkt(t2_temp, [index1, index2]):
+                                        schnittlinienliste.append(t2_temp)
+                                        schnittpunktliste.append(self.schnittpunkt(t2_temp, [index1, index2]))
+                            # self.triangles.append(t1)
+                            # self.triangles.append(t2)
+
                     self.deleteline(schnittlinienliste[i], False)
-                    self.lines.append([index5, index6])
-                    self.lines.append([index6, index7])
+                    index = len(self.lines)
+                    l1_temp=[index5,index6]
+                    l2_temp=[index6,index7]
+                    if  (l1_temp  not  in self.lines) and ([l1_temp[1],l1_temp[0]]  not  in self.lines):
+                        self.lines.append(l1_temp)
+                    if  (l2_temp  not  in self.lines) and ([l2_temp[1],l2_temp[0]]  not  in self.lines):
+                        self.lines.append(l2_temp)
                 self.redraw(True)
         self.demarkpoints()
 
@@ -396,16 +433,11 @@ class Paint(object):
         index1 = self.points.index(point1)
         index2 = self.points.index(point2)
         index3 = self.points.index(point3)
-        if [index1, index2, index3] in self.triangles or [index1, index3, index2] in self.triangles or [index2, index1,
-                                                                                                        index3] in self.triangles or [
-            index2, index3, index1] in self.triangles or [index3, index1, index2] in self.triangles or [index3, index2,
-                                                                                                        index1] in self.triangles:
+        if [index1,index2,index3] in self.triangles or [index1,index3,index2] in self.triangles or [index2,index1,index3] in self.triangles or [index2,index3,index1] in self.triangles or [index3,index1,index2] in self.triangles or [index3,index2,index1] in self.triangles:
             print('dreieick gibt es schon')
             self.demarkpoints()
             return
-        if ([index1, index2] in self.lines or [index2, index1] in self.lines) and (
-                [index1, index3] in self.lines or [index3, index1] in self.lines) and (
-                [index2, index3] in self.lines or [index3, index2] in self.lines):
+        if ([index1, index2] in self.lines or [index2, index1] in self.lines) and ([index1, index3] in self.lines or [index3, index1] in self.lines) and ([index2, index3] in self.lines or [index3, index2] in self.lines):
             index = len(self.triangles)
             self.tlist.insert(index, str([index1, index2, index3]))
             self.triangles.append([index1, index2, index3])
@@ -426,16 +458,14 @@ class Paint(object):
         for i in range(len(self.lines)):  # draw all lines
             p1 = self.lines[i][0]
             p2 = self.lines[i][1]
-            self.c.create_line(self.points[p1][0], self.points[p1][1], self.points[p2][0], self.points[p2][1],
-                               fill='black', capstyle=ROUND, smooth=TRUE, splinesteps=36)
+            self.c.create_line(self.points[p1][0], self.points[p1][1], self.points[p2][0], self.points[p2][1], fill='black', capstyle=ROUND, smooth=TRUE,splinesteps=36)
         if self.var_show_triangles.get() == 1:  # optional: draw all triangles
             for i in range(len(self.triangles)):
                 p1 = self.triangles[i][0]
                 p2 = self.triangles[i][1]
                 p3 = self.triangles[i][2]
-                points = [self.points[p1][0], self.points[p1][1], self.points[p2][0], self.points[p2][1],
-                          self.points[p3][0], self.points[p3][1]]
-                self.c.create_polygon(points, outline="black", fill="azure")
+                points = [self.points[p1][0], self.points[p1][1], self.points[p2][0], self.points[p2][1], self.points[p3][0], self.points[p3][1]]
+                self.c.create_polygon(points, outline="black", fill="deepskyblue")
         if self.marked_point:  # draw marked points
             x1, y1 = (self.marked_point[0] - 5), (self.marked_point[1] - 5)
             x2, y2 = (self.marked_point[0] + 5), (self.marked_point[1] + 5)
@@ -471,7 +501,7 @@ class Paint(object):
             if index in self.triangles[i]:
                 deletelist.append(i)
         for i in range(len(deletelist)):
-            self.deletetriangle(self.triangles[deletelist[len(deletelist) - i - 1]], False)
+            self.deletetriangle(self.triangles[deletelist[len(deletelist)-i-1]], False)
         deletelist.clear()
         for i in range(len(self.lines)):
             if index in self.lines[i]:
@@ -495,16 +525,16 @@ class Paint(object):
     def find_line(self, clicked_point):
         for i in range(len(self.lines)):
             # geradengleichung: ax + by + c = 0 mit b = 1
-            p1x = self.points[self.lines[i][0]][0]  # ax
-            p1y = self.points[self.lines[i][0]][1]  # ay
+            p1x = self.points[self.lines[i][0]][0]#ax
+            p1y = self.points[self.lines[i][0]][1]#ay
             p2x = self.points[self.lines[i][1]][0]
             p2y = self.points[self.lines[i][1]][1]
             bx = p2x - p1x
             by = p2y - p1y
-            vector_length = (bx ** 2 + by ** 2) ** 0.5
+            vector_length = (bx**2 + by**2)**0.5
             dist1 = ((p1x - clicked_point[0]) ** 2 + (p1y - clicked_point[1]) ** 2) ** 0.5
             dist2 = ((p2x - clicked_point[0]) ** 2 + (p2y - clicked_point[1]) ** 2) ** 0.5
-            d = abs(((clicked_point[0] - p1x) * by - (clicked_point[1] - p1y) * bx)) / (bx ** 2 + by ** 2) ** 0.5
+            d = abs(((clicked_point[0]-p1x) * by - (clicked_point[1] - p1y) * bx))/(bx**2+by**2)**0.5
             if d < 3:
                 if dist1 < vector_length and dist2 < vector_length:
                     return self.lines[i]
@@ -518,7 +548,7 @@ class Paint(object):
             if p1 in self.triangles[i] and p2 in self.triangles[i]:
                 deletelist.append(i)
         for i in range(len(deletelist)):
-            self.deletetriangle(self.triangles[deletelist[len(deletelist) - i - 1]], False)
+            self.deletetriangle(self.triangles[deletelist[len(deletelist)-i-1]], False)
         label = str(line1)
         self.lines.remove(line1)
         self.redraw(update)
@@ -526,8 +556,7 @@ class Paint(object):
     # method to calculate if the clicked point is inside an existing triangle. only for 2d drawing mode
     def find_triangle(self, clicked_point):
         for i in range(len(self.triangles)):
-            points = [self.points[self.triangles[i][0]], self.points[self.triangles[i][1]],
-                      self.points[self.triangles[i][2]]]
+            points = [self.points[self.triangles[i][0]], self.points[self.triangles[i][1]], self.points[self.triangles[i][2]]]
             points.sort()
             if points[1][1] < points[2][1]:
                 x = points[1]
@@ -604,33 +633,45 @@ class Paint(object):
         dimH1 = (len(self.lines) - r1) - r2
         dimH2 = len(self.triangles) - r2
         # display chain komplex and homology with plt figures
-        fig1 = plt.figure(figsize=(3, 2), linewidth=1, edgecolor='black')
-        C0 = (r'$Z_2^{%s}$' % (len(self.points)))
-        C1 = (r'$Z_2^{%s}$' % (len(self.lines)))
-        C2 = (r'$Z_2^{%s}$' % (len(self.triangles)))
-        fig1.suptitle("Kettenkomplex")
-        fig1.text(.2, .7, "$0 \longleftarrow C_0 \longleftarrow C_1 \longleftarrow C_2 \longleftarrow 0$")
-        fig1.text(.2, .5,
-                  "$0 \longleftarrow $" + C0 + "$\longleftarrow$" + C1 + "$\longleftarrow$" + C2 + "$\longleftarrow 0$")
+        fig1 = plt.figure(figsize=(1.5, 3), linewidth=1, edgecolor='black')   
+        C0 = (r'$(\mathbb{Z}/2)^{%s}$' % (len(self.points)))
+        C1 = (r'$(\mathbb{Z}/2)^{%s}$' % (len(self.lines)))
+        C2 = (r'$(\mathbb{Z}/2)^{%s}$' % (len(self.triangles)))
+        fig1.suptitle("\n Chain complex")
+        # fig1.text(0.02, .4, "$0 \longleftarrow C_0 \longleftarrow C_1 \longleftarrow C_2 \longleftarrow 0$",fontsize=9)
+        # fig1.text(0.02, .2, "$0 \longleftarrow $" + C0 + "$\longleftarrow$" + C1 + "$\longleftarrow$" + C2 + "$\longleftarrow 0$",fontsize=9)
+        
+        fig1.text(.058, .76, "$0$") 
+        fig1.text(.03, .68  , "$\downarrow$")
+        fig1.text(.03, .6, "$C_2\ \cong\ $" + C2)
+        fig1.text(.03, .5, r"$\downarrow$")
+        fig1.text(.03, .4, "$C_1\ \cong\ $" + C1) 
+        fig1.text(.03, .3, "$\downarrow$")
+        fig1.text(.03, .2, "$C_0\ \cong\ $" + C0) 
+        fig1.text(.03, .12, "$\downarrow$")
+        fig1.text(.058, .04, "$0$") 
 
         self.h1 = FigureCanvasTkAgg(fig1,
-                                    master=self.root)
+                          master=self.root)
         self.h1.draw()
-        self.h1.get_tk_widget().grid(row=1, column=7, columnspan=2)
+        self.h1.get_tk_widget().grid(row=1, column=7,columnspan=2,rowspan=3)
         # plt.close(fig1)
-        H0 = (r'$Z_2^{%s}$' % (dimH0))
-        H1 = (r'$Z_2^{%s}$' % (dimH1))
-        H2 = (r'$Z_2^{%s}$' % (dimH2))
-        fig2 = plt.figure(figsize=(3, 2), linewidth=1, edgecolor='black')
-        fig2.suptitle("Homologie")
-        fig2.text(.2, .7, "$0 \longleftarrow H_0 \longleftarrow H_1 \longleftarrow H_2 \longleftarrow 0$")
-        fig2.text(.2, .5,
-                  "$0 \longleftarrow $" + H0 + "$\longleftarrow$" + H1 + "$\longleftarrow$" + H2 + "$\longleftarrow 0$")
+        H0 = (r'$(\mathbb{Z}/2)^{%s}$' % (dimH0))
+        H1 = (r'$(\mathbb{Z}/2)^{%s}$' % (dimH1))
+        H2 = (r'$(\mathbb{Z}/2)^{%s}$' % (dimH2))
+        fig2 = plt.figure(figsize=(1.1, 3), linewidth=1, edgecolor='black')
+        fig2.suptitle("\nHomology")
+        # fig2.text(.02, .4, "$0 \longleftarrow H_0 \longleftarrow H_1 \longleftarrow H_2 \longleftarrow 0$",fontsize=9)
+        fig2.text(.1, .6, "$H_2\ \cong\ $" + H2) 
+        fig2.text(.1, .4, "$H_1\ \cong\ $" + H1) 
+        fig2.text(.1, .2, "$H_0\ \cong\ $" + H0) 
+        # fig2.text(.02, .2,
+        #           "$0 \longleftarrow $" + H0 + "$\longleftarrow$" + H1 + "$\longleftarrow$" + H2 + "$\longleftarrow 0$",fontsize=9)
 
         self.h2 = FigureCanvasTkAgg(fig2,
-                                    master=self.root)
+                              master=self.root)
         self.h2.draw()
-        self.h2.get_tk_widget().grid(row=2, column=7, columnspan=2)
+        self.h2.get_tk_widget().grid(row=1  , column=9,columnspan=1,rowspan=3)
         # plt.close(fig2)
 
     def get_Data(self):
@@ -638,7 +679,7 @@ class Paint(object):
         with open(self.Datafile, 'r') as file:
             data = file.read()
         Data1 = data.split('delta_1')  # split file at delta_1
-        Data2 = Data1[1].split('delta_2')  # split file at delta_2
+        Data2 = Data1[1].split('delta_2') # split file at delta_2
         pointsstr = Data1[0]
         points = pointsstr.split('\n')
         linesstr = Data2[0]
@@ -651,7 +692,7 @@ class Paint(object):
             for i in range(len(points)):
                 if i == 0:
                     pass  # first line has no point
-                elif i >= len(points) - 4:
+                elif i >= len(points)-4:
                     pass
                 else:
                     point = points[i].split(', ')
@@ -664,7 +705,7 @@ class Paint(object):
             for i in range(len(points)):
                 if i == 0:
                     pass
-                elif i >= len(points) - 4:
+                elif i >= len(points)-4:
                     pass
                 else:
                     point = points[i].split(', ')
@@ -676,7 +717,7 @@ class Paint(object):
         for i in range(len(lines)):
             if i == 0:  # first entry is no line
                 pass
-            elif i >= len(lines) - 4:  # some empty lines in the end
+            elif i >= len(lines)-4:  # some empty lines in the end
                 pass
             else:
                 line = lines[i].split(', ')
@@ -758,15 +799,26 @@ class Paint(object):
             p1 = twodpoints[self.triangles[i][0]]
             p2 = twodpoints[self.triangles[i][1]]
             p3 = twodpoints[self.triangles[i][2]]
-            sortlist.append([(p1[2] + p2[2] + p3[2]) / 3, [p1, p2, p3]])
+            color='yellow'
+            if "hat.txt" in self.Datafile:
+                if (i>40) and (i<230):
+                    if i%24 in [22,23,3,4]:
+                        color='red'
+                if i in [0,1,2,7,8,9,10,14]:
+                    color='red'
+            else:
+                color="deepskyblue"
+            sortlist.append([(p1[2] + p2[2] + p3[2]) / 3, [p1, p2, p3],color])
         sortlist.sort(key=takeFirst, reverse=TRUE)
+
+
         for i in range(len(sortlist)):
             if len(sortlist[i][1]) == 3:  # if it is a triangle
                 if self.var_show_triangles.get() == 1:
                     p1, p2, p3 = sortlist[i][1][0], sortlist[i][1][1], sortlist[i][1][2]
                     points = [p1[0], p1[1], p2[0], p2[1],
                               p3[0], p3[1]]
-                    self.c.create_polygon(points, outline="black", fill="azure")
+                    self.c.create_polygon(points, outline="black", fill=sortlist[i][2])
             elif len(sortlist[i][1]) == 1:  # if it is a point
                 p = sortlist[i][1][0]
                 scale = 2 + int(round(((1300 - p[2])/150)))  #different point size depending on how far away the point is
@@ -840,8 +892,7 @@ class Paint(object):
         H = self.Basepoint
         v = [M[0] - point[0], M[1] - point[1], M[2] - point[2]]  # vector from eye point to current point
         k = self.distance  # distance of the eye point to the projection plain
-        d = abs(
-            k - (point[0] * self.n0new[0] + point[1] * self.n0new[1] + point[2] * self.n0new[2]))  # distance of point
+        d = abs(k - (point[0]*self.n0new[0] + point[1]*self.n0new[1] + point[2]*self.n0new[2]))  # distance of point
         # now solve for intersection of v with projection plain. result are the koordinates in (e1, e2) in the plain
         a = np.array([[e1new[0], e2new[0], -v[0]], [e1new[1], e2new[1], -v[1]], [e1new[2], e2new[2], -v[2]]])
         b = np.array([M[0] - H[0], M[1] - H[1], M[2] - H[2]])
@@ -861,7 +912,7 @@ class Paint(object):
         self.FileWindow.title("Files")
 
         # sets the geometry of toplevel
-        self.FileWindow.geometry("200x200")
+        self.FileWindow.geometry("500x310")
 
         # A Label widget to show in toplevel
         Label(self.FileWindow,
@@ -869,9 +920,14 @@ class Paint(object):
         scrollbar = Scrollbar(self.FileWindow)
         scrollbar.pack(side=RIGHT, fill=Y)
 
-        self.Lb1 = Listbox(self.FileWindow, yscrollcommand=scrollbar.set)
+        self.Lb1 = Listbox(self.FileWindow,width=100, yscrollcommand=scrollbar.set)
         # folder path
-        dir_path = r'Data'
+
+        # dir_path = r'Data'
+
+        base_dir = os.path.dirname(__file__)
+        dir_path = os.path.join(base_dir, r'./Data/')
+
         # list to store files
         res = []
         # Iterate directory
@@ -879,8 +935,17 @@ class Paint(object):
             # check if current path is a file
             if os.path.isfile(os.path.join(dir_path, path)):
                 res.append(path)
+
+        res.remove('.DS_Store')
+        res.sort()
+        names=[]
+        for i in  res:
+            names.append(i.replace('.txt','').replace('_',' '))
+
+        # print(res)
+
         for i in range(len(res)):
-            self.Lb1.insert(i + 1, res[i])
+            self.Lb1.insert(i+1, names[i])
         btn = Button(self.FileWindow, text='Ok', command=self.selected_item)
         # Placing the button and listbox
         btn.pack(side='bottom')
@@ -890,37 +955,46 @@ class Paint(object):
     # method which is called after user pushes the DeleteSelection Button. The marked point, line and triangle all get
     # deleted if there are any.
     def delete_selection(self):
+        self.Datafile=''
         if self.marked_triangle:
             # marked_triangle is a string, so we first have to get the data as a list
             Dreieck = self.marked_triangle.split(', ')
             Dreieck[0] = Dreieck[0].split('[')[1]
             Dreieck[2] = Dreieck[2].split(']')[0]
             self.marked_triangle = None
-            self.deletetriangle([int(Dreieck[0]), int(Dreieck[1]), int(Dreieck[2])], True)
+            self.deletetriangle([int(Dreieck[0]),int(Dreieck[1]),int(Dreieck[2])], True)
         if self.marked_line:
             # marked_line is a string, so we first have to get the data as a list
             Linie = self.marked_line.split(', ')
             Linie[0] = Linie[0].split('[')[1]
             Linie[1] = Linie[1].split(']')[0]
             self.marked_line = None
-            self.deleteline([int(Linie[0]), int(Linie[1])], True)
+            self.deleteline([int(Linie[0]),int(Linie[1])], True)
         if self.marked_point3d:
             # marked_point3d is a string, so we first have to get the data as a list
             Punkt = self.marked_point3d.split(', ')
             Punkt[0] = Punkt[0].split('[')[1]
             Punkt[2] = Punkt[2].split(']')[0]
             self.marked_point3d = None
-            self.deletepoint([int(Punkt[0]), int(Punkt[1]), int(Punkt[2])], True)
+            self.deletepoint([int(Punkt[0]),int(Punkt[1]),int(Punkt[2])], True)
         if self.marked_point:
             # marked_point is not stored as a string, but as a point
             point = self.marked_point
             self.marked_point = None
             self.deletepoint(point, True)
 
-    # method to close the Data window and call the data loading method for the selected datafile.
-    def selected_item(self):
+
+        
+    #method to close the Data window and call the data loading method for the selected datafile.
+    def selected_item(self): 
+        # folder path
+
+        base_dir = os.path.dirname(__file__)
+        dir_path = os.path.join(base_dir, r'./Data/')
+
         for i in self.Lb1.curselection():
-            self.Datafile = 'Data/' + (self.Lb1.get(i))
+            # self.Datafile = dir_path + (self.Lb1.get(i))
+            self.Datafile = dir_path + (self.Lb1.get(i).replace(' ','_')+'.txt')
         self.FileWindow.destroy()
         self.get_Data()
 
@@ -931,19 +1005,19 @@ class Paint(object):
         self.newPointWindow.title("NewPoint")
 
         # sets the geometry of toplevel
-        self.newPointWindow.geometry("283x100")
+        self.newPointWindow.geometry("383x100")
 
         # A Label widget to show in toplevel
         Label(self.newPointWindow,
-              text="AddNewPoint").grid(row=0, column=1)
-        OKButton = Button(self.newPointWindow, text='Confirm', command=self.confirmpoint)
-        OKButton.grid(row=3, column=1)
+              text="AddNewPoint").grid(row = 0, column = 1)
+        OKButton = Button(self.newPointWindow, text = 'Confirm', command=self.confirmpoint)
+        OKButton.grid(row = 3, column = 1)
         Label(self.newPointWindow,
               text="xValue").grid(row=1, column=0)
         Label(self.newPointWindow,
-              text="yValue").grid(row=1, column=1)
+               text="yValue").grid(row=1, column=1)
         Label(self.newPointWindow,
-              text="zValue").grid(row=1, column=2)
+               text="zValue").grid(row=1, column=2)
         self.entryx = Entry(self.newPointWindow, width=15)
         self.entryx.focus_set()
         self.entryx.grid(row=2, column=0)
@@ -975,15 +1049,15 @@ class Paint(object):
         self.newLineWindow.title("NewLine")
 
         # sets the geometry of toplevel
-        self.newLineWindow.geometry("262x100")  # 262 fits the width of the entries
+        self.newLineWindow.geometry("362x100") #262 fits the width of the entries
 
         # A Label widget to show in toplevel
         Label(self.newLineWindow,
               text="AddNewLine").grid(row=0, column=1)
-        # confirm button
+        #confirm button
         OKButton = Button(self.newLineWindow, text='Confirm', command=self.confirmline)
         OKButton.grid(row=3, column=1)
-        # 2Labels and entries for the 2 endpoints of the new line
+        #2Labels and entries for the 2 endpoints of the new line
         Label(self.newLineWindow,
               text="Point1").grid(row=1, column=0)
         Label(self.newLineWindow,
@@ -1008,22 +1082,22 @@ class Paint(object):
             self.lines.append(line)
             self.redraw(True)
 
-    # method which is called after user pushes the 'AddTriangle' button. A new window is created with 3 textfields to input
-    # the indices of the verteces of the triangle
+#method which is called after user pushes the 'AddTriangle' button. A new window is created with 3 textfields to input
+#the indices of the verteces of the triangle
     def AddTriangle_3d(self):
         self.newTriangleWindow = Toplevel(self.c)
         self.newTriangleWindow.title("NewTriangle")
 
         # sets the geometry of toplevel
-        self.newTriangleWindow.geometry("262x100")  # 262 fits with the width of entries
+        self.newTriangleWindow.geometry("362x100") #262 fits with the width of entries
 
         # A Label widget to show in toplevel
         Label(self.newTriangleWindow,
               text="AddNewTriangle").grid(row=0, column=1)
-        # confirm button
+        #confirm button
         OKButton = Button(self.newTriangleWindow, text='Confirm', command=self.confirmtriangle)
         OKButton.grid(row=3, column=1)
-        # 3 labels and entries for the 3 vertex points
+        #3 labels and entries for the 3 vertex points
         Label(self.newTriangleWindow,
               text="Point1").grid(row=1, column=0)
         Label(self.newTriangleWindow,
@@ -1042,16 +1116,16 @@ class Paint(object):
 
         self.newTriangleWindow.mainloop()
 
-    # method which is called after user pushes confirm button in the new triangle window. First it gets checked if the triangle
-    # in any permutation exists already, then if all the lines for the triangle exist and afterwards it gets added to the
-    # triangle list and the listbox displayed on the left. Entries have to be numbers convertable to integers
+#method which is called after user pushes confirm button in the new triangle window. First it gets checked if the triangle
+#in any permutation exists already, then if all the lines for the triangle exist and afterwards it gets added to the
+#triangle list and the listbox displayed on the left. Entries have to be numbers convertable to integers
     def confirmtriangle(self):
         p1 = int(self.entryT1.get())
         p2 = int(self.entryT2.get())
         p3 = int(self.entryT3.get())
-        triangle = [p1, p2, p3]
-        if [p1, p2, p3] in self.triangles or [p1, p3, p2] in self.triangles or [p2, p1, p3] in self.triangles or [
-            p2, p3, p1] in self.triangles or [p3, p1, p2] in self.triangles or [p3, p2, p1] in self.triangles:
+        triangle = [p1,p2,p3]
+        if [p1, p2, p3] in self.triangles or [p1, p3, p2] in self.triangles or [p2, p1,p3] in self.triangles or [
+            p2, p3, p1] in self.triangles or [p3, p1, p2] in self.triangles or [p3, p2,p1] in self.triangles:
             print('dreieick gibt es schon')
             return
         if ([p1, p2] in self.lines or [p2, p1] in self.lines) and (
@@ -1064,28 +1138,28 @@ class Paint(object):
         else:
             print('Kein Dreieick')
 
-    # Method to save current points, lines and triangles as a .txt file
+#Method to save current points, lines and triangles as a .txt file
     def save_Data(self):
-        i = 0
-        while (1):  # check for first not already existing filename
-            if os.path.isfile('Data/File' + str(i) + '.txt'):
+        i=0
+        while(1): #check for first not already existing filename
+            if os.path.isfile(r'Data/File'+str(i)+'.txt'):
                 i += 1
             else:
-                with open('Data/File' + str(i) + '.txt', 'w') as f:
+                with open('Data/File'+str(i)+'.txt', 'w') as f:
                     f.write('delta_0=[\n')
                     for i in range(len(self.points)):
                         f.write(' ' + str(self.points[i]) + ',\n')
-                    f.write(' ]\n\ndelta_1=[\n')
+                    f.write(' ]\n\n\ndelta_1=[\n')
                     for i in range(len(self.lines)):
                         f.write(' ' + str(self.lines[i]) + ',\n')
-                    f.write(' ]\n\ndelta_2=[\n')
+                    f.write(' ]\n\n\ndelta_2=[\n')
                     for i in range(len(self.triangles)):
                         f.write(' ' + str(self.triangles[i]) + ',\n')
+                    f.write(']\n')
                 return
 
-
-# method to retrun the rank of a matrix. This rank is calculated for a real valued matrix, therefore the matrix  is first
-# gaussed over F2.
+#method to retrun the rank of a matrix. This rank is calculated for a real valued matrix, therefore the matrix  is first
+#gaussed over F2.
 def getrank(Matrix):
     if len(Matrix) == 0:
         return 0
@@ -1097,9 +1171,7 @@ def getrank(Matrix):
         else:
             rank = 0
         return rank
-
-
-# returns the row-echelon form of the matrix over F2 as the field
+#returns the row-echelon form of the matrix over F2 as the field
 
 def gauss(Matrix):
     n = len(Matrix)
@@ -1115,14 +1187,14 @@ def gauss(Matrix):
         if Matrix[0][0] == 0:
             new_Matrix = [[None] * (m - 1) for v in range(n)]
             for i in range(n):
-                for j in range(m - 1):
-                    new_Matrix[i][j] = Matrix[i][j + 1]
+                for j in range(m-1):
+                    new_Matrix[i][j] = Matrix[i][j+1]
             next_Matrix = gauss(new_Matrix)
         else:
-            new_Matrix = [[None] * (m - 1) for v in range(n - 1)]
-            for i in range(n - 1):
-                if Matrix[i + 1][0] == 1:
-                    Matrix[i + 1] = [(x ^ y) for (x, y) in zip(Matrix[i + 1], Matrix[0])]
+            new_Matrix = [[None] * (m - 1) for v in range(n-1)]
+            for i in range(n-1):
+                if Matrix[i+1][0] == 1:
+                    Matrix[i+1] = [(x^y) for (x, y) in zip(Matrix[i+1], Matrix[0])]
             for i in range(n - 1):
                 for j in range(m - 1):
                     new_Matrix[i][j] = Matrix[i + 1][j + 1]
@@ -1131,21 +1203,22 @@ def gauss(Matrix):
         if Matrix[0][0] == 0:
             for i in range(n):
                 Matrixreturn[i][0] = 0
-                for j in range(m - 1):
-                    Matrixreturn[i][j + 1] = next_Matrix[i][j]
+                for j in range(m-1):
+                    Matrixreturn[i][j+1] = next_Matrix[i][j]
         else:
             for i in range(n):
                 for j in range(m):
                     if i == 0 or j == 0:
                         Matrixreturn[i][j] = Matrix[i][j]
                     else:
-                        Matrixreturn[i][j] = next_Matrix[i - 1][j - 1]
+                        Matrixreturn[i][j] = next_Matrix[i-1][j-1]
         return Matrixreturn
+
 
 def takeFirst(elem):
     return elem[0]
 
 
-# main
+#main
 if __name__ == '__main__':
     Paint()
