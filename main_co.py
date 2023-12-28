@@ -13,6 +13,8 @@ class Paint(object):
     points = []
     lines = []
     triangles = []
+    triangles_aux = []
+    is_oriented=False
     A12 = []
     A01 = []
     marked_line = None
@@ -73,12 +75,10 @@ class Paint(object):
         self.slider = Scale(self.root, from_=0, to=90, orient='horizontal', command=self.slider_changed)
         self.slider.grid(row=0, column=6)
 
-        self.show_triangles = Checkbutton(self.root, text='Show Triangles', variable=self.var_show_triangles, onvalue=1,
-                                          offvalue=0, command= lambda: self.redraw(False),)
+        self.show_triangles = Checkbutton(self.root, text='Show Triangles', variable=self.var_show_triangles, onvalue=1, offvalue=0, command= lambda: self.redraw(False),)
         self.show_triangles.grid(row=0, column=7)
 
-        self.show_point_indizes = Checkbutton(self.root, text='Point Numbers', variable=self.var_show_point_indizes, onvalue=1,
-                                          offvalue=0, command= lambda: self.redraw(False))
+        self.show_point_indizes = Checkbutton(self.root, text='Point Numbers', variable=self.var_show_point_indizes, onvalue=1, offvalue=0, command= lambda: self.redraw(False))
         self.show_point_indizes.grid(row=0, column=8)
 
         self.plabel = Label(self.left_panel1, text="Points")
@@ -131,6 +131,12 @@ class Paint(object):
 
         self.save_button = Button(self.root, text='SaveData', command=self.save_Data)
         self.save_button.grid(row=0,column=9)
+
+        self.orientability_button = Button(self.root, text='Check Orientability', command=self.check_orientability)
+        self.orientability_button.grid(row=4,column=7,columnspan=1)
+        
+        self.orientability = Canvas(self.root, bg='white', width=300, height=40)
+        self.orientability.grid(row=4, rowspan=1, column=8, columnspan=2)
 
         self.c = Canvas(self.root, bg='white', width=700, height=700)
         self.c.grid(row=1, rowspan=7, column=1, columnspan=6)
@@ -197,6 +203,9 @@ class Paint(object):
         self.points = []
         self.lines = []
         self.triangles = []
+        self.triangles_aux = []
+        self.orientability.delete('all')
+        self.is_oriented=False
         self.marked_point3d = None
         self.marked_point = None
         self.marked_triangle = None
@@ -441,6 +450,8 @@ class Paint(object):
             index = len(self.triangles)
             self.tlist.insert(index, str([index1, index2, index3]))
             self.triangles.append([index1, index2, index3])
+            
+            self.triangles_aux.append(['deepskyblue',[0,0,0]])
             self.redraw(True)
         else:
             print('Kein Dreieick')
@@ -576,9 +587,12 @@ class Paint(object):
     # method to delete a triangle
     def deletetriangle(self, triangle1, update):
         label = str(triangle1)
+        idx_t = self.triangles.index(triangle1)
+        t_aux = self.triangles_aux[idx_t]
         idx = self.tlist.get(0, END).index(label)
         self.tlist.delete(idx)
         self.triangles.remove(triangle1)
+        self.triangles_aux.remove(t_aux)
         self.redraw(update)
 
     # method to calculate and display the Homology of the drawn data.
@@ -741,6 +755,7 @@ class Paint(object):
                         [t[0], t[2]] in self.lines or [t[2], t[0]] in self.lines):
                     self.tlist.insert(i, str(t))
                     self.triangles.append(t)
+                    self.triangles_aux.append(['deepskyblue',[0,0,0]])
         self.redraw(True)
 
     # in 2d mode: clicked item in point list is converted from string to a point and assigned to marked point
@@ -796,9 +811,40 @@ class Paint(object):
             p2 = twodpoints[self.lines[i][1]]
             sortlist.append([(p1[2] + p2[2]) / 2, [p1, p2]])
         for i in range(len(self.triangles)):  # get all triangles in list to be sorted by distance
+
             p1 = twodpoints[self.triangles[i][0]]
             p2 = twodpoints[self.triangles[i][1]]
             p3 = twodpoints[self.triangles[i][2]]
+            t=self.triangles[i]
+
+            if self.is_oriented:                
+                b=self.points[self.triangles[i][0]]
+                n=self.triangles_aux[i][1]
+                
+                scal_prod_M=0
+
+                observer=[
+                    round(self.M[0],2),
+                    round(self.M[1],2),
+                    round(self.M[2],2)
+                ]
+                
+                
+                M_relative = [
+                            observer[0] - b[0],
+                            observer[1] - b[1],
+                            observer[2] - b[2]
+                        ]
+
+                scal_prod_M = M_relative[0]*n[0]+M_relative[1]*n[1]+M_relative[2]*n[2]
+
+                if scal_prod_M<0:
+                    self.triangles_aux[i][0]='deepskyblue'
+                else:
+                    self.triangles_aux[i][0]='steelblue'
+
+
+
             color='yellow'
             if "hat.txt" in self.Datafile:
                 if (i>40) and (i<230):
@@ -807,8 +853,9 @@ class Paint(object):
                 if i in [0,1,2,7,8,9,10,14]:
                     color='red'
             else:
-                color="deepskyblue"
+                color = self.triangles_aux[i][0]
             sortlist.append([(p1[2] + p2[2] + p3[2]) / 3, [p1, p2, p3],color])
+
         sortlist.sort(key=takeFirst, reverse=TRUE)
 
 
@@ -821,7 +868,8 @@ class Paint(object):
                     self.c.create_polygon(points, outline="black", fill=sortlist[i][2])
             elif len(sortlist[i][1]) == 1:  # if it is a point
                 p = sortlist[i][1][0]
-                scale = 2 + int(round(((1300 - p[2])/150)))  #different point size depending on how far away the point is
+                scale=1
+                # scale = 2 + int(round(((1300 - p[2])/150)))  #different point size depending on how far away the point is
                 x1, y1 = (p[0] - scale), (p[1] - scale)
                 x2, y2 = (p[0] + scale), (p[1] + scale)
                 self.c.create_oval(x1, y1, x2, y2, fill='black')
@@ -861,8 +909,8 @@ class Paint(object):
     # method to rotate plain using the slider. Only thing to do is to multiply the plain vectors and their normal vector
     # with a rotation matrix and update the eye point afterwards
     def update_plain(self):
-        d = self.distance  # distance plain to eye point
-        H = self.Basepoint  # 'center' point of plain
+        d = self.distance  # distance plane to eye point
+        H = self.Basepoint  # 'center' point of plane
         if H[0] == 0 and H[1] == 0:
             v = 0
         else:
@@ -912,7 +960,7 @@ class Paint(object):
         self.FileWindow.title("Files")
 
         # sets the geometry of toplevel
-        self.FileWindow.geometry("500x310")
+        self.FileWindow.geometry("500x300")
 
         # A Label widget to show in toplevel
         Label(self.FileWindow,
@@ -942,8 +990,6 @@ class Paint(object):
         for i in  res:
             names.append(i.replace('.txt','').replace('_',' '))
 
-        # print(res)
-
         for i in range(len(res)):
             self.Lb1.insert(i+1, names[i])
         btn = Button(self.FileWindow, text='Ok', command=self.selected_item)
@@ -956,6 +1002,7 @@ class Paint(object):
     # deleted if there are any.
     def delete_selection(self):
         self.Datafile=''
+        self.orientability.delete('all')
         if self.marked_triangle:
             # marked_triangle is a string, so we first have to get the data as a list
             Dreieck = self.marked_triangle.split(', ')
@@ -990,7 +1037,7 @@ class Paint(object):
         # folder path
 
         base_dir = os.path.dirname(__file__)
-        dir_path = os.path.join(base_dir, r'./Data/')
+        dir_path = os.path.join(base_dir, r'Data/')
 
         for i in self.Lb1.curselection():
             # self.Datafile = dir_path + (self.Lb1.get(i))
@@ -1005,7 +1052,7 @@ class Paint(object):
         self.newPointWindow.title("NewPoint")
 
         # sets the geometry of toplevel
-        self.newPointWindow.geometry("383x100")
+        self.newPointWindow.geometry("283x100")
 
         # A Label widget to show in toplevel
         Label(self.newPointWindow,
@@ -1049,7 +1096,7 @@ class Paint(object):
         self.newLineWindow.title("NewLine")
 
         # sets the geometry of toplevel
-        self.newLineWindow.geometry("362x100") #262 fits the width of the entries
+        self.newLineWindow.geometry("262x100")#262 fits the width of the entries
 
         # A Label widget to show in toplevel
         Label(self.newLineWindow,
@@ -1089,7 +1136,7 @@ class Paint(object):
         self.newTriangleWindow.title("NewTriangle")
 
         # sets the geometry of toplevel
-        self.newTriangleWindow.geometry("362x100") #262 fits with the width of entries
+        self.newTriangleWindow.geometry("262x100") #262 fits with the width of entries
 
         # A Label widget to show in toplevel
         Label(self.newTriangleWindow,
@@ -1119,6 +1166,7 @@ class Paint(object):
 #method which is called after user pushes confirm button in the new triangle window. First it gets checked if the triangle
 #in any permutation exists already, then if all the lines for the triangle exist and afterwards it gets added to the
 #triangle list and the listbox displayed on the left. Entries have to be numbers convertable to integers
+        
     def confirmtriangle(self):
         p1 = int(self.entryT1.get())
         p2 = int(self.entryT2.get())
@@ -1134,9 +1182,103 @@ class Paint(object):
             index = len(self.triangles)
             self.tlist.insert(index, str(triangle))
             self.triangles.append(triangle)
+            self.triangles_aux.append(['deepskyblue',[0,0,0]])
             self.redraw(True)
         else:
             print('Kein Dreieick')
+
+    def check_orientability(self):
+        self.orientability.delete('all')
+        oriented=[]
+        normals=[]
+        for i in self.triangles:
+            oriented.append(False)
+        
+            
+        
+        neighbours=[]
+        for t in self.triangles:    
+            idx = self.triangles.index(t)
+            
+            v0=[self.points[t[0]][0] - self.points[t[1]][0],
+                self.points[t[0]][1] - self.points[t[1]][1],
+                self.points[t[0]][2] - self.points[t[1]][2]]
+            v1=[self.points[t[0]][0] - self.points[t[2]][0],
+                self.points[t[0]][1] - self.points[t[2]][1],
+                self.points[t[0]][2] - self.points[t[2]][2]]
+            
+            normals.append([v0[1]*v1[2]-v0[2]*v1[1],v0[2]*v1[0]-v0[0]*v1[2],v0[0]*v1[1]-v0[1]*v1[0]])
+
+            neighbours_temp=[]
+            for s in self.triangles:
+                idx_s=self.triangles.index(s)
+
+                if s.count(t[0])>0 and s.count(t[1])>0:
+                    neighbours_temp.append(idx_s)
+                if s.count(t[0])>0 and s.count(t[2])>0:
+                    neighbours_temp.append(idx_s)
+                if s.count(t[1])>0 and s.count(t[2])>0:
+                    neighbours_temp.append(idx_s)
+            while neighbours_temp.count(idx)>0:
+                neighbours_temp.remove(idx)
+            neighbours.append(neighbours_temp)
+
+        oriented[0]=True
+        self.triangles_aux[0][1]=normals[0]
+        left_triangles=[]
+        for i in range(len(self.triangles)):
+            left_triangles.append(i)
+        next_triangles=[]
+        for x in neighbours[0]:
+            next_triangles.append(x)
+
+        while len(next_triangles)>0:
+            idx=next_triangles[0]
+            n1=normals[idx]
+            count=[0,0]
+            for r in neighbours[idx]:
+                if oriented[r]:
+                    n2=normals[r]
+                    scal_prod=n1[0]*n2[0]+n1[1]*n2[1]+n1[2]*n2[2]
+                    if scal_prod>0:
+                        count[0]+=1
+                    if scal_prod<0:
+                        count[1]+=1
+
+            if count[0]>0 and count[1]>0:
+                self.triangles_aux[idx][0]='orange'
+                print('not orientable')
+                self.orientability.create_text(
+                    (150,25),
+                    text='possibly not orientable',
+                    fill='red',
+                    font='tkDefaeultFont 20'
+                )
+                break
+            elif count[1]>0:
+                normals[idx]=[-normals[idx][0],-normals[idx][1],-normals[idx][2]]
+
+            for x in neighbours[idx]:
+                if (not oriented[x]) and (x not in next_triangles):
+                    next_triangles.append(x)
+            oriented[idx]=True
+            self.triangles_aux[idx][1]=normals[idx]
+            next_triangles.remove(idx)
+            left_triangles.remove(idx)
+            if len(next_triangles)==0:
+                if len(left_triangles)==0:
+                    print('orientable')
+                    self.orientability.create_text(
+                        (150,25),
+                        text='orientable',
+                        fill='green',
+                        font='tkDefaeultFont 20'
+                    )
+                    self.is_oriented=True
+                else:
+                    next_triangles.append(left_triangles[0])
+        self.redraw(False)
+
 
 #Method to save current points, lines and triangles as a .txt file
     def save_Data(self):
