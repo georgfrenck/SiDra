@@ -13,7 +13,7 @@ class Paint(object):
     points = []
     lines = []
     triangles = []
-    triangles_aux = []
+    triangles_aux = []    # Auxilliary data for triangles: color and normal vector
     is_oriented=False
     A12 = []
     A01 = []
@@ -815,9 +815,11 @@ class Paint(object):
             p1 = twodpoints[self.triangles[i][0]]
             p2 = twodpoints[self.triangles[i][1]]
             p3 = twodpoints[self.triangles[i][2]]
-            t=self.triangles[i]
 
-            if self.is_oriented:                
+            if self.is_oriented:            
+
+                # If orientability check was positive, there is a coherent choice of normal vectors, hence two-sided coloring
+
                 b=self.points[self.triangles[i][0]]
                 n=self.triangles_aux[i][1]
                 
@@ -842,8 +844,6 @@ class Paint(object):
                     self.triangles_aux[i][0]='deepskyblue'
                 else:
                     self.triangles_aux[i][0]='steelblue'
-
-
 
             color='yellow'
             if "hat.txt" in self.Datafile:
@@ -960,7 +960,7 @@ class Paint(object):
         self.FileWindow.title("Files")
 
         # sets the geometry of toplevel
-        self.FileWindow.geometry("500x300")
+        self.FileWindow.geometry("500x310")
 
         # A Label widget to show in toplevel
         Label(self.FileWindow,
@@ -1052,7 +1052,7 @@ class Paint(object):
         self.newPointWindow.title("NewPoint")
 
         # sets the geometry of toplevel
-        self.newPointWindow.geometry("283x100")
+        self.newPointWindow.geometry("383x100")
 
         # A Label widget to show in toplevel
         Label(self.newPointWindow,
@@ -1096,7 +1096,7 @@ class Paint(object):
         self.newLineWindow.title("NewLine")
 
         # sets the geometry of toplevel
-        self.newLineWindow.geometry("262x100")#262 fits the width of the entries
+        self.newLineWindow.geometry("362x100")#262 fits the width of the entries
 
         # A Label widget to show in toplevel
         Label(self.newLineWindow,
@@ -1136,7 +1136,7 @@ class Paint(object):
         self.newTriangleWindow.title("NewTriangle")
 
         # sets the geometry of toplevel
-        self.newTriangleWindow.geometry("262x100") #262 fits with the width of entries
+        self.newTriangleWindow.geometry("362x100") #262 fits with the width of entries
 
         # A Label widget to show in toplevel
         Label(self.newTriangleWindow,
@@ -1187,97 +1187,100 @@ class Paint(object):
         else:
             print('Kein Dreieick')
 
+    # Method to check orientability, negative answer does not imply it's not orientability.
+
     def check_orientability(self):
-        self.orientability.delete('all')
-        oriented=[]
-        normals=[]
-        for i in self.triangles:
-            oriented.append(False)
-        
+        if len(self.triangles)>0 and len(self.points[0])==3:
+            self.orientability.delete('all')
+            oriented=[]
+            normals=[]
+            for i in self.triangles:
+                oriented.append(False)
             
-        
-        neighbours=[]
-        for t in self.triangles:    
-            idx = self.triangles.index(t)
+                
             
-            v0=[self.points[t[0]][0] - self.points[t[1]][0],
-                self.points[t[0]][1] - self.points[t[1]][1],
-                self.points[t[0]][2] - self.points[t[1]][2]]
-            v1=[self.points[t[0]][0] - self.points[t[2]][0],
-                self.points[t[0]][1] - self.points[t[2]][1],
-                self.points[t[0]][2] - self.points[t[2]][2]]
-            
-            normals.append([v0[1]*v1[2]-v0[2]*v1[1],v0[2]*v1[0]-v0[0]*v1[2],v0[0]*v1[1]-v0[1]*v1[0]])
+            neighbours=[]
+            for t in self.triangles:    
+                idx = self.triangles.index(t)
+                
+                v0=[self.points[t[0]][0] - self.points[t[1]][0],
+                    self.points[t[0]][1] - self.points[t[1]][1],
+                    self.points[t[0]][2] - self.points[t[1]][2]]
+                v1=[self.points[t[0]][0] - self.points[t[2]][0],
+                    self.points[t[0]][1] - self.points[t[2]][1],
+                    self.points[t[0]][2] - self.points[t[2]][2]]
+                
+                normals.append([v0[1]*v1[2]-v0[2]*v1[1],v0[2]*v1[0]-v0[0]*v1[2],v0[0]*v1[1]-v0[1]*v1[0]])
 
-            neighbours_temp=[]
-            for s in self.triangles:
-                idx_s=self.triangles.index(s)
+                neighbours_temp=[]
+                for s in self.triangles:
+                    idx_s=self.triangles.index(s)
 
-                if s.count(t[0])>0 and s.count(t[1])>0:
-                    neighbours_temp.append(idx_s)
-                if s.count(t[0])>0 and s.count(t[2])>0:
-                    neighbours_temp.append(idx_s)
-                if s.count(t[1])>0 and s.count(t[2])>0:
-                    neighbours_temp.append(idx_s)
-            while neighbours_temp.count(idx)>0:
-                neighbours_temp.remove(idx)
-            neighbours.append(neighbours_temp)
+                    if s.count(t[0])>0 and s.count(t[1])>0:
+                        neighbours_temp.append(idx_s)
+                    if s.count(t[0])>0 and s.count(t[2])>0:
+                        neighbours_temp.append(idx_s)
+                    if s.count(t[1])>0 and s.count(t[2])>0:
+                        neighbours_temp.append(idx_s)
+                while neighbours_temp.count(idx)>0:
+                    neighbours_temp.remove(idx)
+                neighbours.append(neighbours_temp)
 
-        oriented[0]=True
-        self.triangles_aux[0][1]=normals[0]
-        left_triangles=[]
-        for i in range(len(self.triangles)):
-            left_triangles.append(i)
-        next_triangles=[]
-        for x in neighbours[0]:
-            next_triangles.append(x)
+            oriented[0]=True
+            self.triangles_aux[0][1]=normals[0]
+            left_triangles=[]
+            for i in range(len(self.triangles)):
+                left_triangles.append(i)
+            next_triangles=[]
+            for x in neighbours[0]:
+                next_triangles.append(x)
 
-        while len(next_triangles)>0:
-            idx=next_triangles[0]
-            n1=normals[idx]
-            count=[0,0]
-            for r in neighbours[idx]:
-                if oriented[r]:
-                    n2=normals[r]
-                    scal_prod=n1[0]*n2[0]+n1[1]*n2[1]+n1[2]*n2[2]
-                    if scal_prod>0:
-                        count[0]+=1
-                    if scal_prod<0:
-                        count[1]+=1
+            while len(next_triangles)>0:
+                idx=next_triangles[0]
+                n1=normals[idx]
+                count=[0,0]
+                for r in neighbours[idx]:
+                    if oriented[r]:
+                        n2=normals[r]
+                        scal_prod=n1[0]*n2[0]+n1[1]*n2[1]+n1[2]*n2[2]
+                        if scal_prod>0:
+                            count[0]+=1
+                        if scal_prod<0:
+                            count[1]+=1
 
-            if count[0]>0 and count[1]>0:
-                self.triangles_aux[idx][0]='orange'
-                print('not orientable')
-                self.orientability.create_text(
-                    (150,25),
-                    text='possibly not orientable',
-                    fill='red',
-                    font='tkDefaeultFont 20'
-                )
-                break
-            elif count[1]>0:
-                normals[idx]=[-normals[idx][0],-normals[idx][1],-normals[idx][2]]
-
-            for x in neighbours[idx]:
-                if (not oriented[x]) and (x not in next_triangles):
-                    next_triangles.append(x)
-            oriented[idx]=True
-            self.triangles_aux[idx][1]=normals[idx]
-            next_triangles.remove(idx)
-            left_triangles.remove(idx)
-            if len(next_triangles)==0:
-                if len(left_triangles)==0:
-                    print('orientable')
+                if count[0]>0 and count[1]>0:
+                    # self.triangles_aux[idx][0]='orange'
+                    print('not orientable')
                     self.orientability.create_text(
                         (150,25),
-                        text='orientable',
-                        fill='green',
+                        text='possibly not orientable',
+                        fill='red',
                         font='tkDefaeultFont 20'
                     )
-                    self.is_oriented=True
-                else:
-                    next_triangles.append(left_triangles[0])
-        self.redraw(False)
+                    break
+                elif count[1]>0:
+                    normals[idx]=[-normals[idx][0],-normals[idx][1],-normals[idx][2]]
+
+                for x in neighbours[idx]:
+                    if (not oriented[x]) and (x not in next_triangles):
+                        next_triangles.append(x)
+                oriented[idx]=True
+                self.triangles_aux[idx][1]=normals[idx]
+                next_triangles.remove(idx)
+                left_triangles.remove(idx)
+                if len(next_triangles)==0:
+                    if len(left_triangles)==0:
+                        print('orientable')
+                        self.orientability.create_text(
+                            (150,25),
+                            text='orientable',
+                            fill='green',
+                            font='tkDefaeultFont 20'
+                        )
+                        self.is_oriented=True
+                    else:
+                        next_triangles.append(left_triangles[0])
+            self.redraw(False)
 
 
 #Method to save current points, lines and triangles as a .txt file
