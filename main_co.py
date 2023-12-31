@@ -72,7 +72,7 @@ class Paint(object):
         self.eraser_button = Button(self.root, text='eraser', command=self.use_eraser)
         self.eraser_button.grid(row=0, column=5)
 
-        self.slider = Scale(self.root, from_=0, to=90, orient='horizontal', command=self.slider_changed)
+        self.slider = Scale(self.root, from_=-90, to=90, orient='horizontal', command=self.slider_changed)
         self.slider.grid(row=0, column=6)
 
         self.show_triangles = Checkbutton(self.root, text='Show Triangles', variable=self.var_show_triangles, onvalue=1, offvalue=0, command= lambda: self.redraw(False),)
@@ -596,9 +596,11 @@ class Paint(object):
         self.redraw(update)
 
     # method to calculate and display the Homology of the drawn data.
-    def update_matrices(self):
+    def update_matrices_mod_two(self):
         self.A12 = []
         self.A01 = []
+        
+
         # create matrices. A12 has one column for each triangle and one row for each line. Entries are '1' if line is in
         # triangle, '0' otherwise.
         for i in range(len(self.lines)):
@@ -679,6 +681,104 @@ class Paint(object):
         fig2.text(.1, .6, "$H_2\ \cong\ $" + H2) 
         fig2.text(.1, .4, "$H_1\ \cong\ $" + H1) 
         fig2.text(.1, .2, "$H_0\ \cong\ $" + H0) 
+        # fig2.text(.02, .2,
+        #           "$0 \longleftarrow $" + H0 + "$\longleftarrow$" + H1 + "$\longleftarrow$" + H2 + "$\longleftarrow 0$",fontsize=9)
+
+        self.h2 = FigureCanvasTkAgg(fig2,
+                              master=self.root)
+        self.h2.draw()
+        self.h2.get_tk_widget().grid(row=1  , column=9,columnspan=1,rowspan=3)
+        # plt.close(fig2)
+
+    # Computing the homology with real coefficients
+
+    def update_matrices(self):
+        self.A12 = []
+        self.A01 = []
+        
+
+        # create matrices. A12 has one column for each triangle and one row for each line. Entries are '1' if line is in
+        # triangle, '0' otherwise.
+        for i in range(len(self.lines)):
+            self.A12.append([])
+            for j in range(len(self.triangles)):
+                self.A12[i].append(0)
+        for i in range(len(self.triangles)):
+            if [self.triangles[i][0], self.triangles[i][1]] in self.lines:
+                ind1 = self.lines.index([self.triangles[i][0], self.triangles[i][1]])
+                self.A12[ind1][i] = 1
+            elif [self.triangles[i][1], self.triangles[i][0]] in self.lines:
+                ind1 = self.lines.index([self.triangles[i][1], self.triangles[i][0]])
+                self.A12[ind1][i] = -1
+            if [self.triangles[i][0], self.triangles[i][2]] in self.lines:
+                ind1 = self.lines.index([self.triangles[i][0], self.triangles[i][2]])
+                self.A12[ind1][i] = -1
+            elif [self.triangles[i][2], self.triangles[i][0]] in self.lines:
+                ind1 = self.lines.index([self.triangles[i][2], self.triangles[i][0]])
+                self.A12[ind1][i] = 1
+            if [self.triangles[i][1], self.triangles[i][2]] in self.lines:
+                ind1 = self.lines.index([self.triangles[i][1], self.triangles[i][2]])
+                self.A12[ind1][i] = 1
+            elif [self.triangles[i][2], self.triangles[i][1]] in self.lines:
+                ind1 = self.lines.index([self.triangles[i][2], self.triangles[i][1]])
+                self.A12[ind1][i] = -1
+        # A01 has one column for each line and one row for each point. Entries are '1' if point is in
+        # line, '0' otherwise.
+        for i in range(len(self.points)):
+            self.A01.append([])
+            for j in range(len(self.lines)):
+                self.A01[i].append(0)
+        for i in range(len(self.lines)):
+            self.A01[self.lines[i][0]][i] = -1
+            self.A01[self.lines[i][1]][i] = 1
+        # get ranks of matrices
+        if self.A01 != []:
+            r1 = np.linalg.matrix_rank(self.A01)
+        else:
+            r1 = 0
+        if self.A12 != []:
+            r2 = np.linalg.matrix_rank(self.A12)
+        else:
+            r2 = 0
+        # calculate dimensions of homology
+        dimH0 = len(self.points) - r1
+        dimH1 = (len(self.lines) - r1) - r2
+        dimH2 = len(self.triangles) - r2
+        # display chain komplex and homology with plt figures
+        fig1 = plt.figure(figsize=(1.5, 3.1), linewidth=1, edgecolor='black')   
+        C0 = (r'$\mathbb{Q}^{%s}$' % (len(self.points)))
+        C1 = (r'$\mathbb{Q}^{%s}$' % (len(self.lines)))
+        C2 = (r'$\mathbb{Q}^{%s}$' % (len(self.triangles)))
+        fig1.suptitle("\n Chain complex")
+        fig1.text(0.5,.82,"with $\mathbb{Q}$-coefficients", horizontalalignment='center')
+        # fig1.text(0.02, .4, "$0 \longleftarrow C_0 \longleftarrow C_1 \longleftarrow C_2 \longleftarrow 0$",fontsize=9)
+        # fig1.text(0.02, .2, "$0 \longleftarrow $" + C0 + "$\longleftarrow$" + C1 + "$\longleftarrow$" + C2 + "$\longleftarrow 0$",fontsize=9)
+        
+        fig1.text(.1, .71, "$0$") 
+        fig1.text(.072, .63, "$\downarrow$")
+        fig1.text(.072, .55, "$C_2\ \cong\ $" + C2)
+        fig1.text(.072, .47, r"$\downarrow$")
+        fig1.text(.072, .39, "$C_1\ \cong\ $" + C1) 
+        fig1.text(.072, .31, "$\downarrow$")
+        fig1.text(.072, .23, "$C_0\ \cong\ $" + C0) 
+        fig1.text(.072, .15, "$\downarrow$")
+        fig1.text(.1, .07, "$0$") 
+
+        self.h1 = FigureCanvasTkAgg(fig1,
+                          master=self.root)
+        self.h1.draw()
+        self.h1.get_tk_widget().grid(row=1, column=7,columnspan=2,rowspan=3)
+        # plt.close(fig1)
+        H0 = (r'$\mathbb{Q}^{%s}$' % (dimH0))
+        H1 = (r'$\mathbb{Q}^{%s}$' % (dimH1))
+        H2 = (r'$\mathbb{Q}^{%s}$' % (dimH2))
+        fig2 = plt.figure(figsize=(1.1, 3.1), linewidth=1, edgecolor='black')
+        fig2.suptitle("\nHomology")
+        fig2.text(0.5,.82,"with $\mathbb{Q}$-coeff.", horizontalalignment='center')
+        # fig2.text(.02, .4, "$0 \longleftarrow H_0 \longleftarrow H_1 \longleftarrow H_2 \longleftarrow 0$",fontsize=9)
+        fig2.text(.1, .55, "$H_2\ \cong\ $" + H2) 
+        fig2.text(.1, .39, "$H_1\ \cong\ $" + H1) 
+        fig2.text(.1, .23, "$H_0\ \cong\ $" + H0) 
         # fig2.text(.02, .2,
         #           "$0 \longleftarrow $" + H0 + "$\longleftarrow$" + H1 + "$\longleftarrow$" + H2 + "$\longleftarrow 0$",fontsize=9)
 
@@ -816,6 +916,9 @@ class Paint(object):
             p2 = twodpoints[self.triangles[i][1]]
             p3 = twodpoints[self.triangles[i][2]]
 
+            
+            color='yellow'
+
             if self.is_oriented:            
 
                 # If orientability check was positive, there is a coherent choice of normal vectors, hence two-sided coloring
@@ -845,13 +948,19 @@ class Paint(object):
                 else:
                     self.triangles_aux[i][0]='steelblue'
 
-            color='yellow'
             if "hat.txt" in self.Datafile:
+                if self.triangles_aux[i][0]!='steelblue': color='gold'
                 if (i>40) and (i<230):
                     if i%24 in [22,23,3,4]:
-                        color='red'
+                        if self.triangles_aux[i][0]!='steelblue': 
+                            color='firebrick'
+                        else:
+                            color='red'
                 if i in [0,1,2,7,8,9,10,14]:
-                    color='red'
+                    if self.triangles_aux[i][0]!='steelblue': 
+                        color='firebrick'
+                    else:
+                        color='red'
             else:
                 color = self.triangles_aux[i][0]
             sortlist.append([(p1[2] + p2[2] + p3[2]) / 3, [p1, p2, p3],color])
