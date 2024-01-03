@@ -401,7 +401,9 @@ class Paint(object):
                             triangle_temp_2.remove(index7)
                             triangle_temp_2.append(index6)
                             self.triangles.append(triangle_temp_1)
+                            self.triangles_aux.append(['deepskyblue',[0,0,0]])
                             self.triangles.append(triangle_temp_2)
+                            self.triangles_aux.append(['deepskyblue',[0,0,0]])
                             # t1 = [index6 if x == index7 else x for x in j]
                             # t2 = [index6 if x == index5 else x for x in j]
                             self.deletetriangle(j, False)
@@ -587,7 +589,7 @@ class Paint(object):
     # method to delete a triangle
     def deletetriangle(self, triangle1, update):
         label = str(triangle1)
-        idx_t = self.triangles.index(triangle1)
+        idx_t = self.triangles.index(triangle1) 
         t_aux = self.triangles_aux[idx_t]
         idx = self.tlist.get(0, END).index(label)
         self.tlist.delete(idx)
@@ -732,11 +734,11 @@ class Paint(object):
             self.A01[self.lines[i][0]][i] = -1
             self.A01[self.lines[i][1]][i] = 1
         # get ranks of matrices
-        if self.A01 != []:
+        if len(self.lines)!=0 and len(self.points) != 0:
             r1 = np.linalg.matrix_rank(self.A01)
         else:
             r1 = 0
-        if self.A12 != []:
+        if len(self.lines)!=0 and len(self.triangles) != 0:
             r2 = np.linalg.matrix_rank(self.A12)
         else:
             r2 = 0
@@ -928,7 +930,7 @@ class Paint(object):
                 
                 scal_prod_M=0
 
-                observer=[
+                observer = [
                     round(self.M[0],2),
                     round(self.M[1],2),
                     round(self.M[2],2)
@@ -1399,7 +1401,9 @@ class Paint(object):
             if os.path.isfile(r'Data/File'+str(i)+'.txt'):
                 i += 1
             else:
-                with open('Data/File'+str(i)+'.txt', 'w') as f:
+                base_dir = os.path.dirname(__file__)
+                dir_path = os.path.join(base_dir, r'./Data/')
+                with open(dir_path+'File'+str(i)+'.txt', 'w') as f:
                     f.write('delta_0=[\n')
                     for i in range(len(self.points)):
                         f.write(' ' + str(self.points[i]) + ',\n')
