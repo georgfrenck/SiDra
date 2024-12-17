@@ -1,11 +1,11 @@
 # SiDra
 Small program for  drawing  simplicial  complexes and computing  their homology. Short Demonstration is available at
 
-https://www.youtube.com/watch?v=Q8pTPaLMwmE
+[youtube.com/watch?v=JBbOWaeZRk4](https://youtu.be/JBbOWaeZRk4)
 
 A precompiled version (for Mac OS X) can be found here:
 
-http://frenck.net/math/Sidra/Sidra.pkg
+[Frenck.net/Math/SiDra/SiDra.pkg](http://frenck.net/math/Sidra/Sidra.pkg)
 
 ## Draw simplicial complexes in the plane (2D-mode)
 You can draw simplicial complexes by simply using your mouse in conjunction with the three buttons "0-simplices", "1-simplices" and "2-simplices" at the top. The button "eraser" activates the eraser mode and everything you now click on gets erased. By clicking the "erase all" button, everything is erased.
